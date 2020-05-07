@@ -1,11 +1,11 @@
 import sys
 import cv2
 
-# We load the image from disk
+# lire une image
 img_couleur = cv2.imread("/home/client/Images/a2.png")
 img_gris = cv2.imread("/home/client/Images/a2.png", cv2.IMREAD_GRAYSCALE)
 
-# We check that our image has been correctly loaded
+# verifier esq la lecture de l'image fait correctement
 if img_couleur.size == 0 & img_gris.size == 0:
     sys.exit("Error: the image has not been correctly loaded.")
 
@@ -15,7 +15,6 @@ B = img_couleur[:, :, 2]
 
 # demention de l'image
 print(img_couleur.shape)
-# We display our image and ask the program to wait until a key is pressed
 # rouge
 cv2.imshow("R", R)
 cv2.waitKey(0)
