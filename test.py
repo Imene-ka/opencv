@@ -17,7 +17,7 @@ B = img_couleur[:, :, 2]
 print(img_couleur.shape)
 # rouge
 cv2.imshow("R", R)
-cv2.waitKey(0)
+
 # close the windows
 cv2.destroyAllWindows()
 # VERT
