@@ -1,8 +1,12 @@
 import math
-import huff
 import algo_RLE
 import algo_quantif
 import cv2
+import pywt
+import matplotlib.pyplot as plt
+import huffman
+import numpy as np
+
 
 def calcule_entropie(list) :
     freq={}
@@ -39,6 +43,19 @@ def array_list(mat,l,c):
         i=i+1
 
     return list
+def list_array(s,l,c):
+    mat=np.zeros((l,c))
+    i = 0
+    k = 0
+    while i < l:
+        j = 0
+        while j < c:
+            mat[i][j]=s[k]
+            j = j + 1
+            k = k+1
+        i = i + 1
+
+    return mat
 
 """codec = HuffmanCodec.from_frequencies({'e': 100, 'n':20, 'x':1, 'i': 40, 'q':3})
 encoded = codec.encode('exeneeeexniqneieini')
@@ -50,7 +67,7 @@ img_gris=cv2.imread("camera.jpeg",cv2.IMREAD_GRAYSCALE)
 shape1=img_color.shape
 shape2=img_gris.shape
 
-R = img_color[:, :, 0]
+"""R = img_color[:, :, 0]
 G = img_color[:, :, 1]
 B = img_color[:, :, 2]
 
@@ -88,7 +105,7 @@ print(taux2)
 
 #algirithme quantification
 
-(a,h,v,d)=algo_quantif.app_quantif(img_gris)
+a,(h,v,d)=algo_quantif.app_quantif(img_gris,20)
 
 #huffman
 
@@ -108,7 +125,64 @@ taux3=(calcule_taille_rle(h_huff_rle)+calcule_taille_rle(v_huff_rle)+calcule_tai
 print("le taux de compression ondelette -> qauntif -> huffman -> rle :")
 print(taux3)
 
-# calcule de l'entropie
-#
-#print("entrepie = %f",entrepie1)
+# calcule des taux """
+
+val=[5,10,15,20,25,30,35,40,50]
+img=["a2.png","bebe.jpg","camera.jpeg","camera.jpeg","test1.jpg","unnamed.jpg","squirrel.jpg","cats.JPG","dog.jpg"]
+
+for i,v in  enumerate(val):
+    img_ = cv2.imread(img[i],cv2.IMREAD_GRAYSCALE)
+
+    #compression
+    #algo_quatif
+    coef = algo_quantif.app_quantif(img_,v)
+    a,(h,v,d)= coef
+
+    # huffman
+
+    tree1,h_huff = huffman.huffman_encoding_func(array_list(h, h.shape[0], h.shape[1]))
+    tree2,v_huff = huffman.huffman_encoding_func(array_list(v, v.shape[0], v.shape[1]))
+    tree3,d_huff = huffman.huffman_encoding_func(array_list(d, d.shape[0], d.shape[1]))
+
+    # rle binaire
+
+    h_huff_rle = algo_RLE.rle_binaire(h_huff)
+    v_huff_rle = algo_RLE.rle_binaire(v_huff)
+    d_huff_rle = algo_RLE.rle_binaire(d_huff)
+
+    #calcule taux
+
+    taux_ = (calcule_taille_rle(h_huff_rle) + calcule_taille_rle(v_huff_rle) + calcule_taille_rle(d_huff_rle)) / (
+                img_.shape[0] * img_.shape[1])
+
+    #decompression
+    #rel inverse
+
+    h_rle_inverse= algo_RLE.rle_binaire_inverse(h_huff_rle)
+    v_rle_inverse = algo_RLE.rle_binaire_inverse(v_huff_rle)
+    d_rle_inverse = algo_RLE.rle_binaire_inverse(d_huff_rle)
+
+    # huffman inverse
+
+    h_huff_inverse = huffman.huffman_decoding_func(h_rle_inverse,tree1)
+    v_huff_inverse = huffman.huffman_decoding_func(h_rle_inverse,tree2)
+    d_huff_inverse = huffman.huffman_decoding_func(d_rle_inverse,tree3)
+    # ondelette -> image
+
+    h = list_array(h_huff_inverse,h.shape[0],h.shape[1])
+    v = list_array(v_huff_inverse,v.shape[0],v.shape[1])
+    d = list_array(d_huff_inverse,d.shape[0],d.shape[1])
+    coef = a,(h,v,d)
+    image = pywt.idwt2(coef,"db1")
+
+    # affichage de l'image
+
+    plt.figure()
+    plt.imshow(image, cmap=plt.cm.gray)
+    plt.text(0,0,"taux de compression = "+str(taux_)+"  pas = "+str(val[i]))
+    plt.xticks([])
+    plt.yticks([])
+    plt.show()
+
+
 

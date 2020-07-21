@@ -63,14 +63,13 @@ def quantification_pas_constant(img,c,l,pas):
         i=i+1
     return img
 
-def app_quantif(img) :
-    pas = (int)(input("entrez le pas :"))
-    cof0 = pywt.dwt2(img, "db1")
+def app_quantif(img,pas) :
+    #pas = (int)(input("entrez le pas :"))
+    cof0 = pywt.dwt2(img,"db1")
     a1, (h1, v1, d1) = cof0
     for a in [a1, h1, v1, d1]:
         a = quantification_pas_constant(a, a.shape[0], a.shape[1], pas)
-
-    return a1,h1,v1,d1
+    return a1,(h1,v1,d1)
 
 
 """sous_titre=['Approximation', ' Horizontal', 'Vertical ', 'Diagonal ']

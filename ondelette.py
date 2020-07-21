@@ -54,7 +54,7 @@ shape=original.shape
 sous_titre=['Approximation', ' Horizontal', 'Vertical ', 'Diagonal ']
 ond = ['db1', 'db2','haar','gaus2']
 titre = ['Daubechies 1', 'Daubechies 2','haar', 'Gaussian']
-print(original)
+
 i=0
 while i<3 :
     coeffs = pywt.wavedec2(original,ond[i],mode="periodization", level=4)
@@ -70,15 +70,12 @@ while i<3 :
 
     arr, coeff = pywt.coeffs_to_array(coeffs)
 
-    cv2.imshow("R", arr)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-    #plt.figure(titre[i],figsize=(20, 20))
-    #plt.imshow(arr, cmap=plt.cm.gray)
-    #plt.title(titre[i])
-    # plt.set_xticks([])
-    # plt.set_yticks([])
-    #plt.show()
+    plt.figure(titre[i],figsize=(20, 20))
+    plt.imshow(arr, cmap=plt.cm.gray)
+    plt.title(titre[i])
+    #plt.set_xticks()
+    #plt.set_yticks()
+    plt.show()
     i=i+1
 
 """"coeffs = pywt.wavedec2(original,ond[i],mode="zero", level=4)
