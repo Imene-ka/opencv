@@ -65,11 +65,23 @@ def quantification_pas_constant(img,c,l,pas):
 
 def app_quantif(img,pas) :
     #pas = (int)(input("entrez le pas :"))
-    cof0 = pywt.dwt2(img,"db1")
-    a1, (h1, v1, d1) = cof0
-    for a in [a1, h1, v1, d1]:
+    #cof0 = pywt.dwt2(img,"db1")
+    #a1, (h1, v1, d1) = cof0
+    coeffs = pywt.wavedec2(img, "db1", mode="periodization", level=3)
+    a1 = coeffs[0]
+    (h1, v1, d1) = coeffs[-1]
+    (h2, v2, d2) = coeffs[-2]
+    (h3, v3, d3) = coeffs[-3]
+
+    for a in [a1, h1, v1, d1, h2,v2,d2,h3,v3,d3]:
         a = quantification_pas_constant(a, a.shape[0], a.shape[1], pas)
-    return a1,(h1,v1,d1)
+
+    coeffs[0]=a1
+    coeffs[-1]=(h1, v1, d1)
+    coeffs[-2]=(h2, v2, d2)
+    coeffs[-3]=(h3, v3, d3)
+
+    return coeffs
 
 
 """sous_titre=['Approximation', ' Horizontal', 'Vertical ', 'Diagonal ']

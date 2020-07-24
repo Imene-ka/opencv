@@ -135,46 +135,95 @@ for i,v in  enumerate(val):
 
     #compression
     #algo_quatif
-    coef = algo_quantif.app_quantif(img_,v)
-    a,(h,v,d)= coef
+    coeffs = algo_quantif.app_quantif(img_,v)
+    a1 = coeffs[0]
+    (h1, v1, d1) = coeffs[-1]
+    (h2, v2, d2) = coeffs[-2]
+    (h3, v3, d3) = coeffs[-3]
 
     # huffman
 
-    tree1,h_huff = huffman.huffman_encoding_func(array_list(h, h.shape[0], h.shape[1]))
-    tree2,v_huff = huffman.huffman_encoding_func(array_list(v, v.shape[0], v.shape[1]))
-    tree3,d_huff = huffman.huffman_encoding_func(array_list(d, d.shape[0], d.shape[1]))
+    code11,h1_huff = huffman.huffman_encoding_func(array_list(h1, h1.shape[0], h1.shape[1]))
+    code12,v1_huff = huffman.huffman_encoding_func(array_list(v1, v1.shape[0], v1.shape[1]))
+    code13,d1_huff = huffman.huffman_encoding_func(array_list(d1, d1.shape[0], d1.shape[1]))
+
+    code21,h2_huff = huffman.huffman_encoding_func(array_list(h2, h2.shape[0], h2.shape[1]))
+    code22,v2_huff = huffman.huffman_encoding_func(array_list(v2, v2.shape[0], v2.shape[1]))
+    code23,d2_huff = huffman.huffman_encoding_func(array_list(d2, d2.shape[0], d2.shape[1]))
+
+    code31,h3_huff = huffman.huffman_encoding_func(array_list(h3, h3.shape[0], h3.shape[1]))
+    code32,v3_huff = huffman.huffman_encoding_func(array_list(v3, v3.shape[0], v3.shape[1]))
+    code33,d3_huff = huffman.huffman_encoding_func(array_list(d3, d3.shape[0], d3.shape[1]))
 
     # rle binaire
 
-    h_huff_rle = algo_RLE.rle_binaire(h_huff)
-    v_huff_rle = algo_RLE.rle_binaire(v_huff)
-    d_huff_rle = algo_RLE.rle_binaire(d_huff)
+    h1_huff_rle = algo_RLE.rle_binaire(code11)
+    v1_huff_rle = algo_RLE.rle_binaire(code12)
+    d1_huff_rle = algo_RLE.rle_binaire(code13)
+
+    h2_huff_rle = algo_RLE.rle_binaire(code21)
+    v2_huff_rle = algo_RLE.rle_binaire(code22)
+    d2_huff_rle = algo_RLE.rle_binaire(code23)
+
+    h3_huff_rle = algo_RLE.rle_binaire(code31)
+    v3_huff_rle = algo_RLE.rle_binaire(code32)
+    d3_huff_rle = algo_RLE.rle_binaire(code33)
 
     #calcule taux
-
-    taux_ = (calcule_taille_rle(h_huff_rle) + calcule_taille_rle(v_huff_rle) + calcule_taille_rle(d_huff_rle)) / (
-                img_.shape[0] * img_.shape[1])
+    t1=calcule_taille_rle(h1_huff_rle) + calcule_taille_rle(v1_huff_rle) + calcule_taille_rle(d1_huff_rle)
+    t2=calcule_taille_rle(h2_huff_rle) + calcule_taille_rle(v2_huff_rle) + calcule_taille_rle(d2_huff_rle)
+    t3=calcule_taille_rle(h3_huff_rle) + calcule_taille_rle(v3_huff_rle) + calcule_taille_rle(d3_huff_rle)
+    taux_ = ((t1+t2+t3) / (img_.shape[0] * img_.shape[1]))
 
     #decompression
     #rel inverse
 
-    h_rle_inverse= algo_RLE.rle_binaire_inverse(h_huff_rle)
-    v_rle_inverse = algo_RLE.rle_binaire_inverse(v_huff_rle)
-    d_rle_inverse = algo_RLE.rle_binaire_inverse(d_huff_rle)
+    h1_rle_inverse= algo_RLE.rle_binaire_inverse(h1_huff_rle)
+    v1_rle_inverse = algo_RLE.rle_binaire_inverse(v1_huff_rle)
+    d1_rle_inverse = algo_RLE.rle_binaire_inverse(d1_huff_rle)
+
+    h2_rle_inverse = algo_RLE.rle_binaire_inverse(h2_huff_rle)
+    v2_rle_inverse = algo_RLE.rle_binaire_inverse(v2_huff_rle)
+    d2_rle_inverse = algo_RLE.rle_binaire_inverse(d2_huff_rle)
+
+    h3_rle_inverse = algo_RLE.rle_binaire_inverse(h3_huff_rle)
+    v3_rle_inverse = algo_RLE.rle_binaire_inverse(v3_huff_rle)
+    d3_rle_inverse = algo_RLE.rle_binaire_inverse(d3_huff_rle)
 
     # huffman inverse
 
-    h_huff_inverse = huffman.huffman_decoding_func(h_rle_inverse,tree1)
-    v_huff_inverse = huffman.huffman_decoding_func(h_rle_inverse,tree2)
-    d_huff_inverse = huffman.huffman_decoding_func(d_rle_inverse,tree3)
+    h1_huff_inverse = huffman.huffman_decoding_func(code11,h1_huff)
+    v1_huff_inverse = huffman.huffman_decoding_func(code12,v1_huff)
+    d1_huff_inverse = huffman.huffman_decoding_func(code12,d1_huff)
+
+    h2_huff_inverse = huffman.huffman_decoding_func(code21,h2_huff)
+    v2_huff_inverse = huffman.huffman_decoding_func(code22,v2_huff)
+    d2_huff_inverse = huffman.huffman_decoding_func(code23,d2_huff)
+
+    h3_huff_inverse = huffman.huffman_decoding_func(code31,h1_huff)
+    v3_huff_inverse = huffman.huffman_decoding_func(code32,v3_huff)
+    d3_huff_inverse = huffman.huffman_decoding_func(code33,d3_huff)
+
     # ondelette -> image
 
-    h = list_array(h_huff_inverse,h.shape[0],h.shape[1])
-    v = list_array(v_huff_inverse,v.shape[0],v.shape[1])
-    d = list_array(d_huff_inverse,d.shape[0],d.shape[1])
-    coef = a,(h,v,d)
-    image = pywt.idwt2(coef,"db1")
+    h1 = list_array(h1_huff_inverse,h1.shape[0],h1.shape[1])
+    v1 = list_array(v1_huff_inverse,v1.shape[0],v1.shape[1])
+    d1 = list_array(d1_huff_inverse,d1.shape[0],d1.shape[1])
 
+    h2 = list_array(h2_huff_inverse, h2.shape[0], h2.shape[1])
+    v2 = list_array(v2_huff_inverse, v2.shape[0], v2.shape[1])
+    d2 = list_array(d2_huff_inverse, d2.shape[0], d2.shape[1])
+
+    h3 = list_array(h3_huff_inverse, h3.shape[0], h3.shape[1])
+    v3 = list_array(v3_huff_inverse, v3.shape[0], v3.shape[1])
+    d3 = list_array(d3_huff_inverse, d3.shape[0], d3.shape[1])
+
+    coeffs[0] = a1
+    coeffs[-1] = (h1, v1, d1)
+    coeffs[-2] = (h2, v2, d2)
+    coeffs[-3] = (h3, v3, d3)
+
+    image = pywt.waverec2(coeffs,"db1")
     # affichage de l'image
 
     plt.figure()
@@ -183,6 +232,7 @@ for i,v in  enumerate(val):
     plt.xticks([])
     plt.yticks([])
     plt.show()
+
 
 
 

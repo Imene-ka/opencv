@@ -56,7 +56,5 @@ def string_code(string):
         str_code=str_code+str(huffmanCode[char])
 
     return str_code
-"""print(' Char | Huffman code ')
-print('----------------------')
-for (char, frequency) in freq:
-    print(' %-4r |%12s' % (char, huffmanCode[char]))"""
+
+print(string_code(["12","34","12","1"]))
