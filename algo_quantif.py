@@ -1,7 +1,7 @@
 import pywt
 import matplotlib.pyplot as plt
 import numpy as np
-import cv2
+
 
 def AB(min,max) :
     a =255/(max-min)
