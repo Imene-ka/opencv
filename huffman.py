@@ -9,34 +9,31 @@ Pseudocode:
 4. Trim the Huffman Tree (remove the frequencies from the previously built tree)
 5. Encode the text into its compressed form
 """
-def index(data,char) :
-    indice=[]
-    for i, c in enumerate(data):
-        if c == char :
-            indice.append(i)
-    return indice
+
 def return_frequency(data):
     # Take a string and determine the relevant frequencies of the characters
     frequency = {}
-    for indice,char in enumerate(data):
-           if char not in frequency :
-              frequency[char]=(data.count(char),index(data,char))
+    for char in data:
+        if char in frequency:
+            frequency[char] += 1
+        else:
+            frequency[char] = 1
+    lst = [(v, k) for k, v in frequency.items()]
     # Build and sort a list of tuples from lowest to highest frequencies
-    frequency = sorted(frequency.items(), key=lambda x: x[1], reverse=True)
-    return frequency
+    lst.sort(reverse=True)
+    return lst
 
 
 # A helper function to the build_tree()
 def sort_values(nodes_list, node):
-    char1,(node_value,lst) = node.value
+    node_value, char1 = node.value
     index = 0
     max_index = len(nodes_list)
-
     while True:
         if index == max_index:
             nodes_list.append(node)
             return
-        char2,(current_val,l) = nodes_list[index].value
+        current_val, char2 = nodes_list[index].value
         if current_val <= node_value:
             nodes_list.insert(index, node)
             return
@@ -48,33 +45,31 @@ def sort_values(nodes_list, node):
 def build_tree(data):
     lst = return_frequency(data)
     nodes_list = []
-    for i,node_value in enumerate(lst):
+    for node_value in lst:
         node = Node(node_value)
         nodes_list.append(node)
-        #print(nodes_list[i].value)
-    i=0
+
     while len(nodes_list) != 1:
         first_node = nodes_list.pop()
         second_node = nodes_list.pop()
-        char1, (val1,lst1) = first_node.value
-        char2, (val2,lst2) = second_node.value
-        node = Node((char1 +" "+ char2,(val1 + val2,lst1)))
+        val1, char1 = first_node.value
+        val2, char2 = second_node.value
+        node = Node((val1 + val2, char1 +" "+ char2))
         node.set_left_child(second_node)
         node.set_right_child(first_node)
         sort_values(nodes_list, node)
 
-
     root = nodes_list[0]
     tree = Tree()
     tree.root = root
-    return tree,lst
+    return tree
 
 # the function traverses over the huffman tree and returns a dictionary with letter as keys and binary value and value.
 # function get_codes() is for encoding purposes
 def get_codes(root):
     if root is None:
         return {}
-    characters,(frequency ,lst) = root.value
+    frequency, characters = root.value
     char_dict = dict([(i, '') for i in str.split(characters)])
 
     left_branch = get_codes(root.get_left_child())
@@ -94,30 +89,31 @@ def get_codes(root):
 def huffman_encoding_func(data):
     if data == []:
         return None, ''
-    tree,freq = build_tree(data)
+    tree = build_tree(data)
     dict = get_codes(tree.root)
     codes = ''
-    for char in dict:
+    for char in data:
         codes += dict[char]
-    return codes,freq
+    return codes,tree
 
 
 # The function traverses over the encoded data and checks if a certain piece of binary code could actually be a letter
-def huffman_decoding_func(data, freq):
+def huffman_decoding_func(data, tree):
     if data == '':
         return ''
-    maximum=0
-    for char,(val,lst) in freq :
-        if max(lst) > maximum :
-            maximum = max(lst)
-    s = ['' for e in range(maximum+1)]
-    for char,(val,lst) in freq :
-        for e in lst :
-            s[e]=char
+    dict = get_codes(tree.root)
+    reversed_dict = {}
+    for value, key in dict.items():
+        reversed_dict[key] = value
+    start_index = 0
+    end_index = 1
+    max_index = len(data)
+    s = []
+
+    while start_index != max_index:
+        if data[start_index : end_index] in reversed_dict:
+            s.append(reversed_dict[data[start_index : end_index]])
+            start_index = end_index
+        end_index += 1
 
     return s
-
-"""code,freq = huffman_encoding_func(["255","44","255","255","1","1"])
-print(code)
-sortie=huffman_decoding_func(code,freq)
-print(sortie)"""

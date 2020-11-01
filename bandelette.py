@@ -2,7 +2,9 @@ import const_bases
 import quantif_scalaire
 import numpy as np
 import math
+import class_thread
 import cv2
+
 
 def copier(r1, img, l, c):
     i = 0
@@ -117,7 +119,7 @@ def fct(f,b) :
     while i < 4:
         j = 0
         while j < 4:
-            produit[i][j] = produit_scalaire(f,b[str(i) + str(j)])
+            produit[i][j] = np.vdot(f,b[str(i) + str(j)])
             j = j + 1
         i = i + 1
 
@@ -144,23 +146,42 @@ def Rb(i):
 
     return rb
 
-def proba(val,sous_band,shape) :
-    p = np.sum(sous_band == val )
-    return p/(shape[0]*shape[1])
-
-def Rc(b,sous_band,shape) :
-    rc = 0
+def Rc(b1,b2,b3,sous_band1,sous_band2,sous_band3,shape) :
+    rc1 = 0
+    rc2 = 0
+    rc3 = 0
     i = 0
     while i < 4 :
         j = 0
         while j < 4 :
-            pr = proba(b[i][j],sous_band,shape)
-            rc = rc - (math.log2(pr))
+            pr1 = (np.sum(sous_band1 == b1[i][j]))/(shape[0]*shape[1])
+            rc1 = rc1 - (math.log2(pr1))
+            pr2 = (np.sum(sous_band2 == b2[i][j]))/(shape[0]*shape[1])
+            rc2 = rc2 - (math.log2(pr2))
+            pr3 = (np.sum(sous_band3 == b3[i][j]))/(shape[0]*shape[1])
+            rc3 = rc3 - (math.log2(pr3))
             j= j + 1
         i = i +1
 
-    return rc
+    return rc1,rc2,rc3
 
+def calcul_l_old_version(dis0,dis1,dis2,coefH,coefV,coefD,base,q,shape):
+    L_h = []
+    L_v = []
+    L_d = []
+    λ0 = 6.5
+    # multiplicateur de Lagrange
+    λ = (3 / (4 * λ0)) * math.pow(q, 2)
+    rb = Rb(base)
+    for i, b in enumerate(zip(coefH, coefV, coefD)):  # taille de liste
+        rc1, rc2, rc3 = Rc(b[0], b[1], b[2], coefH, coefV, coefD, shape)
+
+        L_h.append(dis0[i] + (λ * (rc1 + rb)))
+        L_v.append(dis1[i] + (λ * (rc2 + rb)))
+        L_d.append(dis2[i] + (λ * (rc3 + rb)))
+        # L_h.append(dis0[i] + λ * (Rc(b[0],coefH,shape) + Rb(base)))
+        # L_v.append(dis1[i] + λ * (Rc(b[1], coefV, shape) + Rb(base)))
+        # L_d.append(dis2[i] + λ * (Rc(b[2], coefD, shape) + Rb(base)))
 #input coef / output lagrange de tt ls blocks
 def calcul_lagrange(dis0,dis1,dis2,coefH,coefV,coefD,base,q,shape) :
     L_h = []
@@ -169,34 +190,85 @@ def calcul_lagrange(dis0,dis1,dis2,coefH,coefV,coefD,base,q,shape) :
     λ0 = 6.5
     # multiplicateur de Lagrange
     λ = (3 / (4 * λ0)) * math.pow(q, 2)
-    for i,b in enumerate(zip(coefH,coefV,coefD)) :
-        L_h.append(dis0[i] + λ * (Rc(b[0],coefH,shape) + Rb(base)))
-        L_v.append(dis1[i] + λ * (Rc(b[1], coefV, shape) + Rb(base)))
-        L_d.append(dis2[i] + λ * (Rc(b[2], coefD, shape) + Rb(base)))
+    rb = Rb(base)
+    for i, b in enumerate(zip(coefH, coefV, coefD)):  # taille de liste
 
+        rc1, rc2, rc3 = Rc(b[0], b[1], b[2], coefH, coefV, coefD, shape)
+
+        L_h.append(dis0[i] + (λ * (rc1 + rb)))
+        L_v.append(dis1[i] + (λ * (rc2 + rb)))
+        L_d.append(dis2[i] + (λ * (rc3 + rb)))
+        # L_h.append(dis0[i] + λ * (Rc(b[0],coefH,shape) + Rb(base)))
+        # L_v.append(dis1[i] + λ * (Rc(b[1], coefV, shape) + Rb(base)))
+        # L_d.append(dis2[i] + λ * (Rc(b[2], coefD, shape) + Rb(base)))
 
     return L_h , L_v ,L_d
 
 def choixMB(d, h_b, v_b, d_b, q, shape) :
     i = 0
     l_h = []
-    l_v = []
+    l_v =[]
     l_d = []
 
-    for h,v,dd in zip(h_b,v_b,d_b) :
+    """
+    th1 =  class_thread.MonThread(d[0][0], d[0][1], d[0][2], h_b[0],v_b[0],d_b[0],1,q, shape)
+    th1.start()
+    th2 =  class_thread.MonThread(d[1][0], d[1][1], d[1][2], h_b[1], v_b[1], d_b[1], 2, q, shape)
+    th2.start()
+    th3 =  class_thread.MonThread(d[2][0], d[2][1], d[2][2], h_b[2], v_b[2], d_b[2], 3, q, shape)
+    th3.start()
+    th4 =  class_thread.MonThread(d[3][0], d[3][1], d[3][2], h_b[3], v_b[3], d_b[3], 4, q, shape)
+    th4.start()
+    th5 =  class_thread.MonThread(d[4][0], d[4][1], d[4][2], h_b[4], v_b[4], d_b[4], 5, q, shape)
+    th5.start()
+    th6 =  class_thread.MonThread(d[5][0], d[5][1], d[5][2], h_b[5], v_b[5], d_b[5], 6, q, shape)
+    th6.start()
+    th7 =  class_thread.MonThread(d[6][0], d[6][1], d[6][2], h_b[6], v_b[6], d_b[6], 7, q, shape)
+    th7.start()
+    th8 =  class_thread.MonThread(d[7][0], d[7][1], d[7][2], h_b[7], v_b[7], d_b[7], 8, q, shape)
+    th8.start()
+    th9 =  class_thread.MonThread(d[8][0], d[8][1], d[8][2], h_b[8], v_b[8], d_b[8], 9, q, shape)
+    th9.start()
+    th10 = class_thread.MonThread(d[9][0], d[9][1], d[9][2], h_b[9], v_b[9], d_b[9], 10, q, shape)
+    th10.start()
+    th11 = class_thread.MonThread(d[10][0], d[10][1], d[10][2], h_b[10], v_b[10], d_b[10],11, q, shape)
+    th11.start()
+    th12 = class_thread.MonThread(d[11][0], d[11][1], d[11][2], h_b[11], v_b[11], d_b[11], 12, q, shape)
+    th12.start()
+
+    val11, val12, val13 = th1.join()
+    val21,val22,val23 = th2.join()
+    val31,val32,val33 = th3.join()
+    val41,val42,val43 = th4.join()
+    val51,val52,val53 = th5.join()
+    val61,val62,val63 = th6.join()
+    val71,val72,val73 = th7.join()
+    val81,val82,val83 = th8.join()
+    val91,val92,val93 = th9.join()
+    val101,val102,val103 = th10.join()
+    val111,val112,val113 = th11.join()
+    val121,val122,val123 = th12.join()
+
+    l_h = [val11,val21,val31,val41,val51,val61,val71,val81,val91,val101,val111,val121]
+    l_v = [val12,val22,val32,val42,val52,val62,val72,val82,val92,val102,val112,val122]
+    l_d = [val13,val23,val33,val43,val53,val63,val73,val83,val93,val103,val113,val123]
+    """
+    for h,v,dd in zip(h_b,v_b,d_b) : # 12 iteration
         dis = d[i]
-        val1,val2,val3 = calcul_lagrange(dis[0],dis[1],dis[2],h,v,dd,i,q,shape)
+        val1,val2,val3 = calcul_lagrange(dis[0],dis[1],dis[2],h,v,dd,i+1,q,shape)
         l_h.append(val1)
         l_v.append(val2)
         l_d.append(val3)
+        i = i + 1
         #l_v.append(calcul_lagrange(dis[1],v,i,q,shape))
         #l_d.append(calcul_lagrange(dis[2],dd,i,q,shape))
-        print("calcule lagrange")
-        i = i + 1
+        print("calcule lagrange",i)
+
 
     l = [h_b,v_b,d_b]
     r = []
-    for k,e in enumerate([l_h,l_v,l_d]) :
+
+    for k,e in enumerate([l_h,l_v,l_d]) : # nbr des block
         result = []
         e1 = e[0]
         e2 = e[1]
@@ -211,26 +283,26 @@ def choixMB(d, h_b, v_b, d_b, q, shape) :
         e11 = e[10]
         e12 = e[11]
         for i , it in enumerate(zip(e1,e2,e3,e4,e5,e6,e7,e8,e9,e10,e11,e12)) :
-            list_L_blocks = [it[0],it[1],it[2],it[3],it[4],it[5],it[6],it[7],it[8],it[9],it[10],it[11],it[12]]
+            list_L_blocks = [it[0],it[1],it[2],it[3],it[4],it[5],it[6],it[7],it[8],it[9],it[10],it[11]]
             index_min = list_L_blocks.index(min(list_L_blocks))
             # l'indice i represente l'indice de block
             # l'indice de min represente la base
             bl = l[k]
-            result.append(bl[i])
+            result.append(bl[index_min][i])
 
         r.append((combiner(result,shape)))
 
     return r[0],r[1],r[2]
 
-# input coef / output coef -> transformation bandelette - > quantification
+# input coeffs / output coeffs -> transformation bandelette - > quantification
 def coef_base(h,v,d,b,q) :
     eb_h = []
     eb_v = []
     eb_d = []
     for e1,e2,e3 in zip(h,v,d):
         eb_h.append(quantif_scalaire.quantif(fct(e1,b),q))
-        eb_v.append(quantif_scalaire.quantif(fct(e2, b), q))
-        eb_d.append(quantif_scalaire.quantif(fct(e3, b), q))
+        eb_v.append(quantif_scalaire.quantif(fct(e2,b),q))
+        eb_d.append(quantif_scalaire.quantif(fct(e3,b),q))
     return eb_h , eb_v , eb_d
 
 # input coef originale et quantifier -> list de distorsion pour chaque block
@@ -238,7 +310,7 @@ def calcule_distorsion(bhs,bvs,bds,q_h,q_v,q_d) :
     d_h = []
     d_v =[]
     d_d = []
-    for bh,bv,bd,q1,q2,q3 in zip(bhs,bvs,bds,q_h,q_v,q_d) :
+    for bh,bv,bd,q1,q2,q3 in zip(bhs,bvs,bds,q_h,q_v,q_d) : # nombre de blocks iteration
         d_h.append(distorsion(bh, q1))
         d_v.append(distorsion(bv, q2))
         d_d.append(distorsion(bd, q3))
@@ -247,19 +319,24 @@ def calcule_distorsion(bhs,bvs,bds,q_h,q_v,q_d) :
 
 #input les coefs de ondelette -> coefs transformées et les bases associé
 def bandelette(h,v,dd,q) :
+
     base_dire = const_bases.bases_directionnel()
+    # h1 , h2 = const_bases.base_H()
+    # dct = const_bases.base_DCT()
+
     # subdivise les blocks
     blocks_h, shape_h = sub_divise(h, h.shape[0], h.shape[1])
     blocks_v, shape_v = sub_divise(v, v.shape[0], v.shape[1])
     blocks_d, shape_d = sub_divise(dd, dd.shape[0], dd.shape[1])
 
-    #h1 , h2 = const_bases.base_H()
-    #dct = const_bases.base_DCT()
+    # declaration
     h_b = []
     v_b = []
     d_b = []
     d = []
-    for b,i in base_dire :
+
+    # les block dans les bases
+    for b,i in base_dire : # 12 iteration
         b1 , b2 , b3 = coef_base(blocks_h,blocks_v,blocks_d,b,q)
         h_b.append(b1)
         v_b.append(b2)
@@ -270,6 +347,7 @@ def bandelette(h,v,dd,q) :
 
     #ajouter les instruction pour les bases complementaires
     print("finsh distortion")
+    #calcule de lagrange
     h_b , v_b , d_b = choixMB(d,h_b,v_b,d_b,q,shape_h)
 
     return h_b,v_b,d_b

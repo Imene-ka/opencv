@@ -100,29 +100,37 @@ def combiner(r,shape) :
 
     return result
 
-def produit_scalaire(f, b):
+def produit_scalaire(f1,f2,f3, b):
     h = 0
-    sum = 0
+    sum1 = 0
+    sum2 = 0
+    sum3 = 0
     while h < 4:
         k = 0
         while k < 4:
-            sum = sum + (f[h][k] * b[h][k])
+            sum1 = sum1 + (f1[h][k] * b[h][k])
+            sum2 = sum2 + (f2[h][k] * b[h][k])
+            sum3 = sum3 + (f3[h][k] * b[h][k])
             k = k + 1
 
         h = h + 1
-    return sum
+    return sum1,sum2,sum3
 
-def fct(f,b) :
-    produit = np.zeros((4, 4))
+def fct(f1,f2,f3,b) :
+    produit1 = np.zeros((4, 4))
+    produit2 = np.zeros((4, 4))
+    produit3 = np.zeros((4, 4))
     i = 0
     while i < 4:
         j = 0
         while j < 4:
-            produit[i][j] = produit_scalaire(f,b[str(i) + str(j)])
+            produit1[i][j],produit2[i][j],produit3[i][j] = produit_scalaire(f1,f2,f3,b[str(i) + str(j)])
+            #produit2[i][j] = produit_scalaire(f, b[str(i) + str(j)])
+            #produit3[i][j] = produit_scalaire(f, b[str(i) + str(j)])
             j = j + 1
         i = i + 1
 
-    return  produit
+    return  produit1,produit2,produit3
 
 def distorsion(f,fq):
     d = 0
@@ -155,16 +163,14 @@ def Rc(b,sous_band) :
     while i < 4 :
         j = 0
         while j < 4 :
-            pr = proba(b[i][j],sous_band)
-            print(pr)
-            print(b[i][j])
-            rc = rc - (math.log2(pr))
+            if str(b[i][j]) in sous_band :
+                rc = rc - sous_band[str(b[i][j])]
             j= j + 1
         i = i +1
 
     return rc
 
-def best_base(block_h,block_v,block_d,coeff_h,coeff_v,coeff_d,pas,bases) :
+def best_base(block_h,block_v,block_d,h_h,v_h,d_h,pas,bases) :
     L_h = []
     L_v = []
     L_d = []
@@ -174,24 +180,26 @@ def best_base(block_h,block_v,block_d,coeff_h,coeff_v,coeff_d,pas,bases) :
     λ0 = 6.5
     # multiplicateur de Lagrange
     λ = (3 / (4 * λ0)) * math.pow(pas, 2)
-
     for b,i in bases :
         #produit scalaire entre la base et le block
-        block_hh = fct(block_h,b)
-        block_vv = fct(block_v,b)
-        block_dd = fct(block_d,b)
+        block_hh,block_vv,block_dd = fct(block_h,block_v,block_d,b)
+        #block_vv = fct(block_v,b)
+        #block_dd = fct(block_d,b)
+        print("produit scalaire",i)
         # quatification
         fh = quantif_scalaire.quantif(block_hh, pas)
         fv = quantif_scalaire.quantif(block_vv,pas)
         fd = quantif_scalaire.quantif(block_dd,pas)
 
-        L_h.append(distorsion(block_hh,quantif_scalaire.val_quantif(fh,pas)) + λ * (Rc(quantif_scalaire.val_quantif(fh,pas),coeff_h) + Rb(i)))
+        rb = Rb(i)
+
+        L_h.append(distorsion(block_hh,quantif_scalaire.val_quantif(fh,pas)) + λ * (Rc(fh,h_h)) + rb)
         fs_h.append(fh)
         #*******************
-        L_v.append(distorsion(block_vv, quantif_scalaire.val_quantif(fv,pas)) + λ * (Rc(quantif_scalaire.val_quantif(fv,pas),coeff_v) + Rb(i)))
+        L_v.append(distorsion(block_vv, quantif_scalaire.val_quantif(fv,pas)) + λ * (Rc(fv,v_h)) + rb)
         fs_v.append(fv)
         #**********************
-        L_d.append(distorsion(block_dd, quantif_scalaire.val_quantif(fd,pas)) + λ * (Rc(quantif_scalaire.val_quantif(fd,pas),coeff_d) + Rb(i)))
+        L_d.append(distorsion(block_dd, quantif_scalaire.val_quantif(fd,pas)) + λ * (Rc(fd,d_h)) + rb)
         fs_d.append(fd)
 
     index_h = L_h.index(min(L_h)) + 1
@@ -202,13 +210,39 @@ def best_base(block_h,block_v,block_d,coeff_h,coeff_v,coeff_d,pas,bases) :
     #*************************
     index_d = L_d.index(min(L_d)) + 1
     M_block_d = fs_d[index_d - 1]
-
+    print("terminéé")
     return M_block_h , M_block_v , M_block_d , index_h , index_v , index_d
+def pro_log(sous_band) :
+    result = {}
+    i = 0
+    while i < sous_band.shape[0] :
+        j = 0
+        while j < sous_band.shape[1] :
+            if str(sous_band[i][j]) in result :
+                result[str(sous_band[i][j])] += 1
+            else:
+                result[str(sous_band[i][j])] = 1
+            j = j + 1
+        i = i + 1
+    for cle,val in result.items() :
+        result[cle] = math.log(val/(sous_band.shape[0]*sous_band.shape[1]),2)
+    return result
+def histogramme(h1,v1,d1,q) :
+    h1_quantif = quantif_scalaire.quantif(h1, q)
+    v1_quantif = quantif_scalaire.quantif(v1, q)
+    d1_quantif = quantif_scalaire.quantif(d1, q)
+
+    h_h = pro_log(h1_quantif)
+    h_v = pro_log(v1_quantif)
+    h_d = pro_log(d1_quantif)
+
+    return h_h , h_v , h_d
 #input les coefs de ondelette -> coefs transformées et les bases associé
 def bandelette(h,v,d,q) :
     base_dire = const_bases.bases_directionnel()
     # h1 , h2 = const_bases.base_H()
     # dct = const_bases.base_DCT()
+    # calcule le histogramme
 
     h_b = []
     h_index =[]
@@ -218,13 +252,15 @@ def bandelette(h,v,d,q) :
     d_index = []
     #subdivise les blocks
 
-    blocks_h , shape_h = sub_divise(h,h.shape[0],h.shape[1])
+    blocks_h, shape_h = sub_divise(h, h.shape[0],h.shape[1])
     blocks_v, shape_v = sub_divise(v, v.shape[0], v.shape[1])
     blocks_d, shape_d = sub_divise(d, d.shape[0], d.shape[1])
 
+    h_h, v_h, d_h = histogramme(h, v, d, q)
+
     #print("finish subdivision ",d.shape,v.shape)
     for bh,bv,bd in zip(blocks_h,blocks_v,blocks_d) :
-        bh_m , bv_m ,bd_m , ih ,iv ,  id = best_base(bh,bv,bd,h,v,d,q,base_dire)
+        bh_m , bv_m ,bd_m , ih ,iv ,  id = best_base(bh,bv,bd,h_h,v_h,d_h,q,base_dire)
         #bh_m , ih = best_base(bh,h,q,base_dire)
         #bv_m , iv = best_base(bv,v,q,base_dire)
         #bd_m , id = best_base(bd,d,q,base_dire)
@@ -257,4 +293,3 @@ f = [[1,1,1,1],[1,1,1,1],[0,0,0,0],[1,1,1,1]]
 print(a)
 s = bandelette(a,a.shape[0],a.shape[1],20)
 print(s)"""
-

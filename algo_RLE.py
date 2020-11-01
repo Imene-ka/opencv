@@ -27,44 +27,48 @@ def rle(donnee,pre,sortie) :
 
 def true(list) :
     for e in list :
-        if e > 255 :
+        if e >= 255 :
             return True
     return False
 
 def code(sortie) :
-    val = sortie
-    cmp = 0
+    i = 0
     result = []
-    while true(val) :
-        result = []
-        for e in val:
-            if e < 255:
-                result.append(e)
-            else:
-                if e > 255:
+    while i < len(sortie):
+        if sortie[i] < 255:
+            result.append(sortie[i])
+        else:
+            if sortie[i] == 255 :
+                result.append(255)
+                result.append(0)
+            else :
+                val = sortie[i]
+                while val > 255 :
                     result.append(255)
-                    result.append(e - 255)
-                else:
-                    if cmp != 0 :
-                        result.append(e)
-                    else :
-                        result.append(255)
-                        result.append(0)
-                        cmp = 1
-        val = result
+                    val = val - 255
+                    if val <= 255 :
+                        result.append(val)
+                        if val == 255 :
+                           result.append(0)
+                        break
+        i = i + 1
 
     return result
 
 def recuperation(d) :
     result = []
+    val = 0
     i = 0
     while i < len(d) :
         if d[i] == 255 :
-            result.append(d[i]+d[i+1])
-            i = i + 2
+            while d[i] == 255 :
+                 val = val + d[i]
+                 i = i + 1
+            result.append(val+d[i])
+            val = 0
         else :
             result.append(d[i])
-
+        i = i + 1
     return result
 def rle_binaire(donnee):
     sortie=[]
@@ -75,7 +79,6 @@ def rle_binaire(donnee):
         sortie=rle(donnee,"",sortie)
 
     return code(sortie)
-
 def rle_binaire_inverse(d) :
     i=0
     pre=""
@@ -99,14 +102,16 @@ print(sortie2)
 donnee1=rle_binaire_inverse(sortie1)
 print(donnee1)
 donnee2=rle_binaire_inverse(sortie2)
-print(donnee2)"""
+print(donnee2)
 """
-s1 = code([255,21,650,12])
+
+"""
+print([500,21,1050,12])
+s1 = code([500,21,1050,12])
 print(s1)
 s2 = recuperation(s1)
 print(s2)
 """
-
 
 
 
