@@ -42,8 +42,9 @@ def sort_values(nodes_list, node):
 
 # Build a Huffman Tree: nodes are stored in list with their values (frequencies) in descending order.
 # Two nodes with the lowest frequencies form a tree node. That node gets pushed back into the list and the process repeats
-def build_tree(data):
-    lst = return_frequency(data)
+def build_tree(data,lst):
+    #lst = return_frequency(data)
+
     nodes_list = []
     for node_value in lst:
         node = Node(node_value)
@@ -60,6 +61,7 @@ def build_tree(data):
         sort_values(nodes_list, node)
 
     root = nodes_list[0]
+
     tree = Tree()
     tree.root = root
     return tree
@@ -87,20 +89,31 @@ def get_codes(root):
 
 # when we've got the dictionary of binary values and huffman tree, tree encoding is simple
 def huffman_encoding_func(data):
+    freq = return_frequency(data)
+    if  len(freq) == 1 :
+        return "0",freq[0]
     if data == []:
         return None, ''
-    tree = build_tree(data)
+    tree = build_tree(data,freq)
     dict = get_codes(tree.root)
     codes = ''
     for char in data:
         codes += dict[char]
     return codes,tree
 
-
+def definie(e,o) :
+    i = 0
+    l = []
+    while i < o :
+        l.append(e)
+        i += 1
+    return l
 # The function traverses over the encoded data and checks if a certain piece of binary code could actually be a letter
 def huffman_decoding_func(data, tree):
     if data == '':
         return ''
+    if len(data) == 1 :
+        return definie(tree[1],tree[0])
     dict = get_codes(tree.root)
     reversed_dict = {}
     for value, key in dict.items():
@@ -117,3 +130,4 @@ def huffman_decoding_func(data, tree):
         end_index += 1
 
     return s
+
